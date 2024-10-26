@@ -1,6 +1,6 @@
 # searxng-vpn-docker
 
-Create a new private/auth protected SearXNG instance with a VPN for better privicy in five minutes using Docker
+Create a new private/auth protected SearXNG instance with a VPN for better privacy in five minutes using Docker
 
 ## What is included ?
 
