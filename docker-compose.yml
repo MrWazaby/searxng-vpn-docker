@@ -1,0 +1,87 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8080:8080/tcp 
+      - 8888:8888/tcp 
+    volumes:
+      - /home/searxng/gluetun:/gluetun
+    environment:
+      - PUID=1001 
+      - PGID=1001 
+      - TZ=Europe/Paris
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - SERVER_COUNTRIES=${VPN_COUNTRIES}
+      - HTTPPROXY=off
+      - SHADOWSOCKS=off
+      - UPDATER_PERIOD=24h
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    security_opt:
+      - no-new-privileges:true
+    restart: always
+    
+  searxng:
+    image: searxng/searxng
+    container_name: SearXNG
+    network_mode: service:gluetun
+    mem_limit: 512mb
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /home/searxng/searxng:/etc/searxng:rw 
+    environment:
+      - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME}/
+    restart: always
+
+  caddy:
+    container_name: caddy
+    image: docker.io/library/caddy:2-alpine
+    network_mode: host
+    restart: always
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data:rw
+      - caddy-config:/config:rw
+    environment:
+      - SEARXNG_HOSTNAME=${SEARXNG_HOSTNAME}
+      - SEARXNG_TLS=${LETSENCRYPT_EMAIL:-internal}
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+
+  authelia:
+    container_name: authelia    
+    image: authelia/authelia
+    network_mode: host
+    environment:
+      - TZ=${TIMEZONE}
+      - X_AUTHELIA_CONFIG_FILTERS=template
+      - JWT_SECRET=${JWT_SECRET}
+      - SEARXNG_HOSTNAME=${SEARXNG_HOSTNAME}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - SESSION_SECRET=${SESSION_SECRET} 
+    volumes:
+      - ./authelia/config:/config
+    hostname: authelia
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:

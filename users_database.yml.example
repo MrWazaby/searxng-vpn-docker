@@ -1,0 +1,16 @@
+# yamllint disable rule:line-length
+---
+###############################################################
+#                         Users Database                      #
+###############################################################
+
+# This file can be used if you do not have an LDAP set up.
+
+users:
+  my_user:
+    disabled: false
+    displayname: "MyName"
+    password: "CHANGEME"
+    email: me@email.tld
+...
+# yamllint enable rule:line-length
