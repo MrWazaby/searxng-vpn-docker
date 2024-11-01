@@ -64,7 +64,7 @@ session:
       same_site: 'lax'
       inactivity: '5m'
       expiration: '1h'
-      remember_me: '1d'
+      remember_me: '30d'
 
 regulation:
   max_retries: 3
